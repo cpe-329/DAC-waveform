@@ -21,46 +21,44 @@ volatile uint8_t counter_2bit = 0;
 
 void main(void)
 {
+    uint8_t data;
+    uint8_t i;
 	init(FREQ_1_5_MHZ);
 
-	P4->SEL0 |= P4_3;
-	P4->SEL1 &= ~P4_3;
-	P4->DIR |= P4_3;
+	P1->SEL0 |= BIT5 | BIT6 |BIT7; // SPI pins
+	P2->DIR |= BIT0 | BIT1 | BIT2; // output to LEDS
 
-	// setup TIMER_A0
-	TIMER_A0->CCTL[0] &= ~TIMER_A_CCTLN_CCIFG; // clear interrupt
-	TIMER_A0->CCTL[1] &= ~TIMER_A_CCTLN_CCIFG; // clear interrupt
+	EUSCI_B0->CTLW0 |= EUSCI_B_CTLW0_SWRST; //sets EUSCI state
 
-	TIMER_A0->CCTL[0] = TIMER_A_CCTLN_CCIE; // TACCR0 interrupt enabled
-	TIMER_A0->CCTL[1] = TIMER_A_CCTLN_CCIE; // TACCR1 interrupt enabled
+	EUSCI_B0->CTLW0 |= EUSCI_B_CTLW0_SWRST |
+	                   EUSCI_B_CTLW0_MST |
+	                   EUSCI_B_CTLW0_SYNC |
+	                   EUSCI_B_CTLW0_CKPI |
+	                   EUSCI_B_CTLW0_SSEL2 |
+	                   EUSCI_B_CTLW0_MSB;
 
-	TIMER_A0->CCR[0] = 94;   // set CCR0 count
-	TIMER_A0->CCR[1] = 47;   // set CCR1 count
+	EUSCI_B0 ->BRW = 0x01;
 
-	TIMER_A0->CTL = TIMER_A_CTL_TASSEL_2 | // SMCLK,
-									TIMER_A_CTL_MC_1;  // UP mode, count up to CCR[0]
+	//init state machine
+	EUSCI_B0 ->CTLW0 & = ~EUSCI_B_CTLW0_SWRST;
+	EUSCI_B0->IE |= EUSCI_B_IE_RXIE;
 
-	NVIC->ISER[0] = 1 << ((TA0_0_IRQn) & 31);   // set NVIC interrupt
-	NVIC->ISER[0] = 1 << ((TA0_N_IRQn) & 31);   // TA0_0 and TA0_N
+	__enable_irq(); //Enable global interrupt
 
-	__enable_irq();     // Enable global interrupt
-
-	while(1){}
+	NVIC->ISER[0] = 1 << ((EUSCI_B0_IRQn) & 31);
+	//polling loop
+	while(1){
+	    while(!(EUSCI_B0->IFG & EUSCI_B_IFG_TXIFG)){
+	        EUSCI_B0->TXBUF = data;
+	    }
+	    delay_ms(2000, FREQ);
+	}
 }
 
 // Timer A0_0 interrupt service routine
-void TA0_0_IRQHandler(void) {
-	TIMER_A0->CCTL[0] &= ~TIMER_A_CCTLN_CCIFG;  // Clear the CCR0 interrupt
-	P2->OUT ^= RGB_RED;
-	P1->OUT ^= LED1_PIN;
-}
-
-// Timer A0_N interrupt service routine for CCR1 - CCR4
-void TA0_N_IRQHandler(void)
-{
-   if(TIMER_A0->CCTL[1]&TIMER_A_CCTLN_CCIFG)   // check for CCR1 interrupt
-   {
-			TIMER_A0->CCTL[1] &= ~TIMER_A_CCTLN_CCIFG; // clear CCR1 interrupt
-			P1->OUT ^= LED1_PIN;
-   }
+void EUSCI_B0_IRQHandler(void) {
+	if(EUSCI_B0->IFG & EUSCI_B)->IFG_RXIFG){
+	    data = RXBUF;
+	    P2->OUT = RXdata;
+	}
 }
