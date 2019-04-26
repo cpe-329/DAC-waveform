@@ -10,19 +10,22 @@ inline void dac_init(){
 }
 
 
-
-inline void dac_set(const unsigned int data){
+inline void dac_set(const unsigned int val){
     cs_low();
+//    NOP
     while(!(EUSCI_B0->IFG & EUSCI_B_IFG_TXIFG)){}
-    EUSCI_B0->TXBUF = CONTORL_BITS | ((data & 0xF00) >> 8);
+    EUSCI_B0->TXBUF = CONTORL_BITS | ((val & 0xF00) >> 8);
     while(!(EUSCI_B0->IFG & EUSCI_B_IFG_TXIFG)){}
-    EUSCI_B0->TXBUF = data & 0xFF;//data;//dac_cmd(0x800);
+    EUSCI_B0->TXBUF = val & 0xFF;//data;//dac_cmd(0x800);
+//    NOP
     while(!(EUSCI_B0->IFG & EUSCI_B_IFG_TXIFG)){}
     cs_high();
+//    NOP
     latch_low();
-    NOP
+//    NOP
     latch_high();
-    delay_ms_auto(1);
+//    NOP
+//    delay_ms_auto(1);
 }
 
 inline void cs_low(){

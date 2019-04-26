@@ -107,8 +107,8 @@
 
 int main(void)
 {
-     uint16_t data;
-//    uint32_t i;
+    volatile uint16_t data;
+    volatile uint32_t i;
 
 
     init(FREQ);
@@ -121,6 +121,7 @@ int main(void)
 
     EUSCI_B0->CTLW0 = EUSCI_B_CTLW0_SWRST  | // keep eUSCI in reset
                       EUSCI_B_CTLW0_MST    | // Set as SPI master
+                      EUSCI_B_CTLW0_CKPH |
                       EUSCI_B_CTLW0_SYNC   | // Set as synchronous mode
 //                      EUSCI_B_CTLW0_CKPL   | // Set clock polarity high
                       EUSCI_B_CTLW0_SSEL__SMCLK | // SMCLK
@@ -139,27 +140,15 @@ int main(void)
 
     while(1)
     {
+        #define MAX 1300
         // write numbers 0-7 to SPI. Use TXIFG to verify TXBUF is empty
-        for(data=0; data<4098; data++)
-        {
+        for(data = 0; data < MAX; data += 2){
             dac_set(data);
-//          // wait for TXBUF to be empty before writing to SPI
-//            cs_low();
-//            #define CONTORL_BITS 0b01110000
-//            while(!(EUSCI_B0->IFG & EUSCI_B_IFG_TXIFG)){}
-//            EUSCI_B0->TXBUF = CONTORL_BITS | ((data & 0xF00) >> 8);
-//            while(!(EUSCI_B0->IFG & EUSCI_B_IFG_TXIFG)){}
-//            EUSCI_B0->TXBUF = data & 0xFF;//data;//dac_cmd(0x800);
-//            while(!(EUSCI_B0->IFG & EUSCI_B_IFG_TXIFG)){}
-//            cs_high();
-//            latch_low();
-//            NOP
-//            latch_high();
-//            delay_ms(1, FREQ);
-//              led_off();
-//              delay_ms(16, FREQ);
-//              led_on();
-
+            for (i = 0; i< 2; i++){}
+        }
+        for(data = 0; data < MAX; data += 2){
+            dac_set(MAX - data);
+            for (i = 0; i< 2; i++){}
         }
     }
 }
@@ -176,7 +165,7 @@ void EUSCIB0_IRQHandler(void)
         RXData = EUSCI_B0->RXBUF;
 
         P2->OUT &= ~(BIT0 | BIT1 | BIT2); // reset to 0
-        P2->OUT |= RXData;                // set data to LEDs
+        P2->OUT |= (RXData & 0b0111);                // set data to LEDs
     }
 }
 
