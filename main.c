@@ -11,85 +11,17 @@
 // *  TIMER_A0 CCR0 and CCR1 to create 2 timing events
 // */
 //
-//#include <stdint.h>
-//#include "msp.h"
+#include <stdint.h>
+#include "msp.h"
 //
 #include "my_msp.h"
 #include "delay.h"
 #include "led.h"
 #include "spi.h"
+#include "timers.h"
 //
 #define FREQ FREQ_24_MHZ
-//
-//
-//void main(void)
-//{
-//    // volitile int data = 2048;
-//
-//	led_on();
-//	delay_ms(500, FREQ);
-//
-//	P1->SEL1 |= SPI_B0_CLK_PIN |
-//				SPI_B0_MOSI_PIN |
-//				SPI_B0_MISO_PIN; // SPI pins
-//	P1->SEL0 &= ~(P1_5 | P1_6 | P1_7);
-//
-//	P3->SEL0 &= ~SPI_CS_PIN;
-//	P3->SEL1 &= ~SPI_CS_PIN;
-//	P3->DIR |= SPI_CS_PIN;
-//
-////	P2->DIR |= BIT0 | BIT1 | BIT2; // output to LEDS
-//
-//	EUSCI_B0->CTLW0 |= EUSCI_B_CTLW0_SWRST; //sets EUSCI state
-//
-//	EUSCI_B0->CTLW0 |= EUSCI_B_CTLW0_SWRST; // Put eUSCI state machine in reset
-//
-//    EUSCI_B0->CTLW0 = EUSCI_B_CTLW0_SWRST  | // keep eUSCI in reset
-//                      EUSCI_B_CTLW0_MST    | // Set as SPI master
-//                      EUSCI_B_CTLW0_SYNC   | // Set as synchronous mode
-//                      EUSCI_B_CTLW0_CKPL   | // Set clock polarity high
-//                      EUSCI_B_CTLW0_SSEL__SMCLK | // SMCLK
-//                      EUSCI_B_CTLW0_MSB;     // MSB first
-//
-//	EUSCI_B0->BRW = 0x01;               // no div - fBitClock = fBRCLK/(UCBRx)
-//
-//    EUSCI_B0->CTLW0 &= ~EUSCI_B_CTLW0_SWRST;  // Initialize USCI state machine
-//    EUSCI_B0->IE |= EUSCI_B_IE_RXIE;          // Enable RX interrupt
-//
-//    // Enable global interrupt
-//    __enable_irq();
-//
-//    // Enable eUSCI_B0 interrupt in NVIC module
-//    NVIC->ISER[0] = 1 << ((EUSCIB0_IRQn) & 31);
-//
-//
-//	led_off();
-//	//polling loop
-//	while(1){
-//
-//	    led_on();
-//	    while(!(EUSCI_B0->IFG & EUSCI_B_IFG_TXIFG0)){}
-//		led_off();
-//		EUSCI_B0->TXBUF = dac_cmd(0x800);
-//		// led_off();
-//
-//	    // cs_high();
-//	    delay_ms(500, FREQ);
-//	    led_off();
-//        delay_ms(500, FREQ);
-//	}
-//}
-//
-//// Timer A0_0 interrupt service routine
-//void EUSCI_B0_IRQHandler(void) {
-//    rgb_set(RGB_RED);
-//    volatile uint8_t data;
-//
-//	if(EUSCI_B0->IFG & EUSCI_B_IFG_RXIFG0){
-//	    data = EUSCI_B0->RXBUF;
-//	    P2->OUT = data;
-//	}
-//}
+
 /*
  *  SPI Example using eUSCI_B0 for SPI
  *  P1.5  UCB0CLK   SCLK
@@ -102,12 +34,10 @@
  *  the RXBUF and set the value to multicolor LED (P2.0-2)
  */
 
-#include "msp.h"
-#include <stdint.h>
+volatile uint16_t data = 0;
 
 int main(void)
 {
-     uint16_t data;
 //    uint32_t i;
 
 
@@ -140,26 +70,8 @@ int main(void)
     while(1)
     {
         // write numbers 0-7 to SPI. Use TXIFG to verify TXBUF is empty
-        for(data=0; data<4098; data++)
-        {
-            dac_set(data);
-//          // wait for TXBUF to be empty before writing to SPI
-//            cs_low();
-//            #define CONTORL_BITS 0b01110000
-//            while(!(EUSCI_B0->IFG & EUSCI_B_IFG_TXIFG)){}
-//            EUSCI_B0->TXBUF = CONTORL_BITS | ((data & 0xF00) >> 8);
-//            while(!(EUSCI_B0->IFG & EUSCI_B_IFG_TXIFG)){}
-//            EUSCI_B0->TXBUF = data & 0xFF;//data;//dac_cmd(0x800);
-//            while(!(EUSCI_B0->IFG & EUSCI_B_IFG_TXIFG)){}
-//            cs_high();
-//            latch_low();
-//            NOP
-//            latch_high();
-//            delay_ms(1, FREQ);
-//              led_off();
-//              delay_ms(16, FREQ);
-//              led_on();
-
+        for(data = 0; data < 4096; data++){
+        dac_set(data);
         }
     }
 }
@@ -179,4 +91,16 @@ void EUSCIB0_IRQHandler(void)
         P2->OUT |= RXData;                // set data to LEDs
     }
 }
+
+void TA0_0_IRQHandler(void) {
+
+    led_on();
+    delay_ms_auto(200);
+    led_off();
+    TIMER_A0->CCTL[0] &= ~TIMER_A_CCTLN_CCIFG;  // Clear the CCR0 interrupt
+    data++;
+    if(data > 4095){
+        data = 0;
+    }
+ }
 
