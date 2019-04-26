@@ -50,6 +50,16 @@
 #define P4_6 BIT6  // P4.6
 #define P4_7 BIT7  // P4.7
 
+// Port 5
+#define P5_0 BIT0  // P5.0
+#define P5_1 BIT1  // P5.1
+#define P5_2 BIT2  // P5.2
+#define P5_3 BIT3  // P5.3
+#define P5_4 BIT4  // P5.4
+#define P5_5 BIT5  // P5.5
+#define P5_6 BIT6  // P5.6
+#define P5_7 BIT7  // P5.7
+
 // Macro for disabling watchdog
 #define DISABLE_WATCHDOG  WDT_A->CTL = WDT_A_CTL_PW | WDT_A_CTL_HOLD;
 

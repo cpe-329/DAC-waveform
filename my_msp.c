@@ -13,6 +13,7 @@
 #include "delay.h"
 #include "lcd.h"
 #include "keypad.h"
+#include "spi.h"
 
 
 inline void init(const unsigned int freq){
@@ -24,6 +25,7 @@ inline void init(const unsigned int freq){
 	led_init();
 	rgb_init();
 
+	dac_init();
 	//lcd_init();
 	//keypad_init();
 }
