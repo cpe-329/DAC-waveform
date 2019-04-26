@@ -17,12 +17,12 @@
 #include "delay.h"
 #include "led.h"
 
-volatile uint8_t counter_2bit = 0;
+#define FREQ FREQ_24_MHZ
 
 void main(void)
 {
     uint8_t data;
-    uint8_t i;
+
 	init(FREQ_1_5_MHZ);
 
 	P1->SEL0 |= BIT5 | BIT6 |BIT7; // SPI pins
@@ -33,19 +33,19 @@ void main(void)
 	EUSCI_B0->CTLW0 |= EUSCI_B_CTLW0_SWRST |
 	                   EUSCI_B_CTLW0_MST |
 	                   EUSCI_B_CTLW0_SYNC |
-	                   EUSCI_B_CTLW0_CKPI |
-	                   EUSCI_B_CTLW0_SSEL2 |
+	                   EUSCI_B_CTLW0_CKPL |
+	                   EUSCI_B_CTLW0_UCSSEL_2 |
 	                   EUSCI_B_CTLW0_MSB;
 
 	EUSCI_B0 ->BRW = 0x01;
 
 	//init state machine
-	EUSCI_B0 ->CTLW0 & = ~EUSCI_B_CTLW0_SWRST;
+	EUSCI_B0->CTLW0 &= ~EUSCI_B_CTLW0_SWRST;
 	EUSCI_B0->IE |= EUSCI_B_IE_RXIE;
 
 	__enable_irq(); //Enable global interrupt
 
-	NVIC->ISER[0] = 1 << ((EUSCI_B0_IRQn) & 31);
+	NVIC->ISER[0] = 1 << ((EUSCIB0_IRQn) & 31);
 	//polling loop
 	while(1){
 	    while(!(EUSCI_B0->IFG & EUSCI_B_IFG_TXIFG)){
@@ -57,8 +57,9 @@ void main(void)
 
 // Timer A0_0 interrupt service routine
 void EUSCI_B0_IRQHandler(void) {
-	if(EUSCI_B0->IFG & EUSCI_B)->IFG_RXIFG){
-	    data = RXBUF;
-	    P2->OUT = RXdata;
+    volatile uint8_t data;
+	if(EUSCI_B0->IFG & EUSCI_B_IFG_RXIFG0){
+	    data = EUSCI_B_RXBUF_RXBUF_MASK ;
+	    P2->OUT = data;
 	}
 }
