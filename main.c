@@ -33,11 +33,11 @@ void main(void)
 	EUSCI_B0->CTLW0 |= EUSCI_B_CTLW0_SWRST |  // set reset
 	                   EUSCI_B_CTLW0_MST |    // set as master
 	                   EUSCI_B_CTLW0_SYNC |   // set as SPI
-	                   EUSCI_B_CTLW0_CKPI |   // set CLK polarity high
+	                   EUSCI_B_CTLW0_CKPL |   // set CLK polarity high
 	                   EUSCI_B_CTLW0_UCSSEL_2 |  // use SMCLK
 	                   EUSCI_B_CTLW0_MSB;     // set endianness
-	EuSCI_B0->CTLW0 &= ~(EUSCI_B_CTLW0_MODE0 | // clear both mode bits
-	                     EUSCI_B_CTLW0_MODE1;  // set 3-pin mode
+	EUSCI_B0->CTLW0 &= ~(EUSCI_B_CTLW0_MODE0 | // clear both mode bits
+	                     EUSCI_B_CTLW0_MODE1);  // set 3-pin mode
 	EUSCI_B0 ->BRW = 0x01;
 
 	//init state machine
