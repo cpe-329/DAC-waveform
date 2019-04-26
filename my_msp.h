@@ -12,6 +12,13 @@
 
 // Port 1
 #define P1_0 BIT0  // P1.0
+#define P1_1 BIT1  // P1.1
+#define P1_2 BIT2  // P1.2
+#define P1_3 BIT3  // P1.3
+#define P1_4 BIT4  // P1.4
+#define P1_5 BIT5  // P1.5
+#define P1_6 BIT6  // P1.6
+#define P1_7 BIT7  // P1.7
 
 // Port 2
 #define P2_0 BIT0  // P2.0
